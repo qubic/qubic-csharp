@@ -7,7 +7,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "li.qubic.lib", "li.qubic.li
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "li.qubic.cpp", "li.qubic.cpp\li.qubic.cpp.vcxproj", "{54D1F8C7-C3CC-458B-955A-A7EECB09FF35}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "li.qubic.test", "li.qubic.test\li.qubic.test.csproj", "{4A833D29-4033-44E4-9C15-CE5E7AABA8D9}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "li.qubic.test", "li.qubic.test\li.qubic.test.csproj", "{4A833D29-4033-44E4-9C15-CE5E7AABA8D9}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{F33F31D2-481C-44A2-A0BF-2E1C67715EED}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PeerCollector", "Samples\PeerCollector\PeerCollector.csproj", "{60D02FD1-83AD-4BF0-98BC-1458D89B395E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,9 +59,24 @@ Global
 		{4A833D29-4033-44E4-9C15-CE5E7AABA8D9}.Release|x64.Build.0 = Release|Any CPU
 		{4A833D29-4033-44E4-9C15-CE5E7AABA8D9}.Release|x86.ActiveCfg = Release|Any CPU
 		{4A833D29-4033-44E4-9C15-CE5E7AABA8D9}.Release|x86.Build.0 = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|x64.Build.0 = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Debug|x86.Build.0 = Debug|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|x64.ActiveCfg = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|x64.Build.0 = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|x86.ActiveCfg = Release|Any CPU
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{60D02FD1-83AD-4BF0-98BC-1458D89B395E} = {F33F31D2-481C-44A2-A0BF-2E1C67715EED}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {359E7EE8-BA2E-4F0F-BD26-8195BBA2D25D}

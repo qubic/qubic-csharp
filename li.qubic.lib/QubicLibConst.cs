@@ -11,5 +11,6 @@ namespace li.qubic.lib
         public static int BUFFER_SIZE = 1048576 * 4;
         public static int SIGNATURE_SIZE = 64;
         public static int PORT = 21841;
+        public static int NUMBER_OF_EXCHANGED_PEERS = 4;
     }
 }
