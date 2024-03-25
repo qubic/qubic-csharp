@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SendMany": {
+      "commandName": "Project",
+      "commandLineArgs": "10.10.10.10 aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa QIMDCFEUDXXDAGPQFFHPPLFAHSPDXVMIFZVMPQVPRFITSWDDILMNJLWEBGZK 1"
+    }
+  }
+}

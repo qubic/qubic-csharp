@@ -65,6 +65,8 @@ namespace li.qubic.lib
         /// <returns></returns>
         public string GetIdentity(byte[] publicKey)
         {
+            if (publicKey == null)
+                throw new ArgumentException("Must not be null", "publicKey");
             byte[] identity = new byte[60];
             getIdentity(publicKey, identity, false);
             return Encoding.ASCII.GetString(identity);

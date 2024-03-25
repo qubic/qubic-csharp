@@ -763,6 +763,22 @@ namespace li.qubic.lib
         public uint contractIndex;
     };
 
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
+    public struct RequestContractFunction // Invokes contract function
+    {
+        public uint contractIndex;
+        public ushort inputType;
+        public ushort inputSize;
+        // Variable-size input
+    };
+
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
+
+    public struct GetSendToManyV1Fee_output
+    {
+        public int fee; // Number of billionths
+    }
+
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 0)]
@@ -1013,6 +1029,9 @@ long long numberOfUnits;
         RESPOND_OWNED_ASSETS = 39,
         REQUEST_POSSESSED_ASSETS = 40,
         RESPOND_POSSESSED_ASSETS = 41,
+
+        REQUEST_CONTRACT_FUNCTION = 42,
+        RESPOND_CONTRACT_FUNCTION = 43,
 
         PROCESS_SPECIAL_COMMAND = 255
     }

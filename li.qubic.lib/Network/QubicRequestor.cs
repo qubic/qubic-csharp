@@ -99,6 +99,21 @@ namespace li.qubic.lib.Network
         }
 
 
+        public Task<T> GetDataPackageFromPeerAsyc<T>(byte[] requestPackage, short waitForPackageType)
+            where T : struct
+        {
+            return Task.Run(() =>
+            {
+                var t = new TaskCompletionSource<T>();
+
+                GetDataPackageFromPeer<T>(requestPackage, waitForPackageType, s => t.TrySetResult(s));
+
+                return t.Task;
+            });
+        }
+
+      
+
         /// <summary>
         /// must not send connect
         /// </summary>
