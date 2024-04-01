@@ -6,6 +6,7 @@ using System.Linq;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using static li.qubic.lib.Asset;
 
 namespace SendMany
 {
@@ -155,6 +156,17 @@ namespace SendMany
             requestor.Disconnect();
 
             return 0; // all good
+        }
+
+        /// <summary>
+        /// struct to package the send many request
+        /// </summary>
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        public struct SendManyRequest
+        {
+            public RequestResponseHeader header;
+            public BaseTransaction tx;
+            public SendToManyV1_input input;
         }
 
         /// <summary>

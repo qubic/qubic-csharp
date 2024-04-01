@@ -868,6 +868,18 @@ namespace li.qubic.lib
             set => this.unionData = Marshalling.Serialize(value);
         }
 
+
+        [StructLayout(LayoutKind.Sequential, Pack = 0)]
+        public struct SendToManyV1_input
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25 * 32))]
+            public byte[] addresses;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25))]
+            public long[] amounts;
+        };
+
+        
+
         /*
     union
     {
