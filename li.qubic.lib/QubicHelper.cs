@@ -128,6 +128,7 @@ namespace li.qubic.lib
 
         /// <summary>
         /// can be used to verify a qubic struct (signed data)
+        /// data should include signature
         /// </summary>
         /// <param name="data">the struct/object to verify</param>
         /// <param name="size">size of what should be verified</param>

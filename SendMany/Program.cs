@@ -64,7 +64,7 @@ namespace SendMany
             {
                 var id = args[i];
                 long amount = 0;
-                canProceed = canProceed && CheckId(id) && long.TryParse(args[++i], out amount);
+                canProceed = canProceed && IdentityHelper.CheckIdentity(id) && long.TryParse(args[++i], out amount);
                 
                 destinations.Add(new DestinationAdress(id, amount));
             }
@@ -76,7 +76,7 @@ namespace SendMany
             }
 
             // get fee
-            fixedFee = GetSendManyFeeAsync().GetAwaiter().GetResult();
+            fixedFee = QubicLibConst.SC_QUTIL_SENDMANY_FEE; // GetSendManyFeeAsync().GetAwaiter().GetResult();
 
             var destinationAddresses = new byte[25][];
             var destinationAmounts = new long[25];
@@ -109,7 +109,7 @@ namespace SendMany
                     inputSize = (ushort)Marshal.SizeOf<SendToManyV1_input>(),
                     inputType = 1,
                     tick = 0,
-                    destinationPublicKey = GetDestinationPublicKey(),
+                    destinationPublicKey = IdentityHelper.GenerateContractAddress(QUTIL_CONTRACT_ID),
                     sourcePublicKey = senderPublicKey
                 },
                 input = new SendToManyV1_input()
@@ -119,6 +119,12 @@ namespace SendMany
                 }
             };
 
+
+            // get signature
+            var signature = SignAndGetSignature(request);
+
+            // concat package to send to the network
+            var toSendPackage = Marshalling.Serialize(request).Concat(signature).ToArray();
             // here you may want to check if the source address has enough balance!
 
             // calculated package size
@@ -136,11 +142,11 @@ namespace SendMany
             var tickinfo = requestor.GetTickInfo().GetAwaiter().GetResult();
             request.tx.tick = tickinfo.tick + 5; // add 5 to current tick
 
-            // get signature
-            var signature = SignAndGetSignature(request);
+            //// get signature
+            //var signature = SignAndGetSignature(request);
 
-            // concat package to send to the network
-            var toSendPackage = Marshalling.Serialize(request).Concat(signature).ToArray();
+            //// concat package to send to the network
+            //var toSendPackage = Marshalling.Serialize(request).Concat(signature).ToArray();
 
             // verify signature (only for poc use)
             var verififed = _helper.VerifyQubicStruct(toSendPackage.Skip(8).ToArray(), toSendPackage.Length - 8, senderPublicKey);
@@ -156,17 +162,6 @@ namespace SendMany
             requestor.Disconnect();
 
             return 0; // all good
-        }
-
-        /// <summary>
-        /// struct to package the send many request
-        /// </summary>
-        [StructLayout(LayoutKind.Sequential, Pack = 0)]
-        public struct SendManyRequest
-        {
-            public RequestResponseHeader header;
-            public BaseTransaction tx;
-            public SendToManyV1_input input;
         }
 
         /// <summary>
@@ -207,52 +202,7 @@ namespace SendMany
             return result.fee;
         }
 
-        /// <summary>
-        /// Checks if the dest id is valid
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        private static bool CheckId(string id)
-        {
-            if (string.IsNullOrEmpty(id))
-            {
-                return false;
-            }
-            if(id.Length != 60)
-            {
-                Console.WriteLine($"{id} must be 60 characters");
-                return false;
-            }
-            if (!Regex.IsMatch(id, "[A-Z]"))
-            {
-                Console.WriteLine($"{id} must consist of [A-Z]");
-                return false;
-            }
-            var bytes = _helper.GetPublicKeyFromIdentity(id);
-            var compareId = _helper.GetIdentity(bytes);
-            if (compareId != id)
-            {
-                Console.WriteLine($"{id} must be a valid qubic address");
-                return false;
-            }
-            return true;
-        }
-
-
-        /// <summary>
-        /// genrates the sc id
-        /// </summary>
-        /// <returns></returns>
-        private static byte[] GetDestinationPublicKey()
-        {
-            byte[] destPublicKey = new byte[32];
-
-            Array.Copy(BitConverter.GetBytes((ulong)QUTIL_CONTRACT_ID), 0, destPublicKey, 0, 8);
-            Array.Copy(BitConverter.GetBytes((ulong)0), 0, destPublicKey, 8, 8);
-            Array.Copy(BitConverter.GetBytes((ulong)0), 0, destPublicKey, 16, 8);
-            Array.Copy(BitConverter.GetBytes((ulong)0), 0, destPublicKey, 24, 8);
-            return destPublicKey;
-        }
+        
 
     }
 

@@ -8,6 +8,7 @@ using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using static li.qubic.lib.Asset;
 
 namespace li.qubic.lib
 {
@@ -779,6 +780,16 @@ namespace li.qubic.lib
         public int fee; // Number of billionths
     }
 
+    /// <summary>
+    /// struct to package the send many request
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
+    public struct SendManyRequest
+    {
+        public RequestResponseHeader header;
+        public BaseTransaction tx;
+        public SendToManyV1_input input;
+    }
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 0)]
@@ -842,6 +853,16 @@ namespace li.qubic.lib
 
 
     [StructLayout(LayoutKind.Sequential, Pack = 0)]
+    public struct SendToManyV1_input
+    {
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25 * 32))]
+        public byte[] addresses;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25))]
+        public long[] amounts;
+    };
+
+
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
     public struct Asset
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
@@ -869,15 +890,7 @@ namespace li.qubic.lib
         }
 
 
-        [StructLayout(LayoutKind.Sequential, Pack = 0)]
-        public struct SendToManyV1_input
-        {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25 * 32))]
-            public byte[] addresses;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = (25))]
-            public long[] amounts;
-        };
-
+       
         
 
         /*
