@@ -3,6 +3,7 @@ using System.Collections;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text;
 
 namespace li.qubic.lib
@@ -172,31 +173,26 @@ namespace li.qubic.lib
 
         #region Seed Gen
 
-
-
-
-        private Random _random = new Random();
-        private char GetLetter()
-        {
-            // This method returns a random lowercase letter.
-            // ... Between 'a' and 'z' inclusive.
-            int num = _random.Next(0, 26); // Zero to 25
-            char let = (char)('a' + num);
-            return let;
-        }
-
         /// <summary>
         /// generates a random seed
         /// </summary>
         /// <returns></returns>
         public string GenerateRandomSeed()
         {
-            var sb = new StringBuilder();
-            for(var i = 0; i < 60; i++)
-            {
-                sb.Append(GetLetter());
-            }
-            return sb.ToString();
+            var length = 55;
+            var allowableChars = @"abcdefghijklmnopqrstuvwxyz";
+
+            // Generate random data
+            var rnd = RandomNumberGenerator.GetBytes(length);
+
+            // Generate the output string
+            var allowable = allowableChars.ToCharArray();
+            var l = allowable.Length;
+            var chars = new char[length];
+            for (var i = 0; i < length; i++)
+                chars[i] = allowable[rnd[i] % l];
+
+            return new string(chars);
         }
 
         #endregion
