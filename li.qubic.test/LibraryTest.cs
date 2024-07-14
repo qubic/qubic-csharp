@@ -14,7 +14,8 @@ namespace li.qubic.test
 
             Assert.IsNotNull(seed);
 
-            Assert.IsTrue(seed.Length == 60);
+            Assert.IsTrue(seed.Length == 55);
+            Assert.IsTrue(seed.Length == "prwutqifhtqxjrhpliuhzvezyobjwilejelewskiykvogmvlgolkqie".Length);
 
             Console.WriteLine(seed);
         }
@@ -22,7 +23,7 @@ namespace li.qubic.test
         [TestMethod]
         public void TestCreateIdentity()
         {
-            var seed = "prwutqifhtqxjrhpliuhzvezyobjwilejelewskiykvogmvlgolkqiesqxcp";
+            var seed = "prwutqifhtqxjrhpliuhzvezyobjwilejelewskiykvogmvlgolkqie";
 
             Assert.IsNotNull(seed);
 
