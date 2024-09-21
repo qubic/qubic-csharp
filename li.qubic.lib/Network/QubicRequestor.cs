@@ -14,7 +14,7 @@ using li.qubic.lib.Helper;
 
 namespace li.qubic.lib.Network
 {
-    public class QubicRequestor
+    public class QubicRequestor : IDisposable
     {
         private Guid InstanceId = Guid.NewGuid();
 
@@ -26,6 +26,8 @@ namespace li.qubic.lib.Network
         private short? _waitForPackageType = null;
 
         public Action<QubicRequestorReceivedPackage>? PackageReceived { get; set; }
+        public Action OnDisconnect { get; set; }
+
 
 
         public QubicRequestor(string targetIp, int receiveTimeout = 2)
@@ -78,7 +80,7 @@ namespace li.qubic.lib.Network
 
 
         /// <summary>
-        /// CAUTION: PackageReceived will be overwritten
+        /// 
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="requestPackage"></param>
@@ -86,7 +88,7 @@ namespace li.qubic.lib.Network
         public void GetDataPackageFromPeer<T>(byte[] requestPackage, short waitForPackageType, Action<T> resultFunc)
             where T : struct
         {
-            this.PackageReceived = (p) =>
+            Action<QubicRequestorReceivedPackage> receiverAction = (p) =>
             {
                 if (p.Header.type == (short)waitForPackageType)
                 {
@@ -94,8 +96,10 @@ namespace li.qubic.lib.Network
                     resultFunc.Invoke(result);
                 }
             };
+
+            this.PackageReceived += receiverAction;
             this.AskPeer(requestPackage, waitForPackageType);
-            this.PackageReceived = null;
+            this.PackageReceived -= receiverAction;
         }
 
 
@@ -354,6 +358,11 @@ namespace li.qubic.lib.Network
             {
                 Console.WriteLine($"[QUBICREQUESTOR-{InstanceId}] ERROR: {e.Message}");
             }
+        }
+
+        public void Dispose()
+        {
+            this.Close();
         }
     }
 }
