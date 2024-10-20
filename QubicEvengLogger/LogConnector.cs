@@ -2,13 +2,8 @@
 using li.qubic.lib.Helper;
 using li.qubic.lib.Logging;
 using li.qubic.lib.Network;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace QubicEvengLogger
 {
@@ -68,7 +63,7 @@ namespace QubicEvengLogger
         /// <param name="lastReceivedId"></param>
         private void RequestLogs(QubicRequestor requestor, ulong lastReceivedId)
         {
-            
+
             _lastRequest = DateTime.UtcNow;
 
             var header = new RequestResponseHeader(true)
@@ -77,14 +72,16 @@ namespace QubicEvengLogger
                 type = RequestLog.type
             };
 
+            var addition = BatchSize - 1; // because toId is include it need to be batch-1 to just request one log entry
+
             var rl = new RequestLog()
             {
                 passcode = GetPassCode(),
                 fromID = lastReceivedId,
-                toID = lastReceivedId + BatchSize - 1, // -1 because toID is included
+                toID = lastReceivedId + addition, // -1 because toID is included
             };
 
-            Console.WriteLine($"Request ids from {lastReceivedId} to {lastReceivedId+BatchSize-1}");
+            Console.WriteLine($"Request ids from {lastReceivedId} to {lastReceivedId + addition}");
 
             var data = Marshalling.Serialize(header).Concat(Marshalling.Serialize(rl)).ToArray();
             requestor.Send(data);
@@ -124,7 +121,7 @@ namespace QubicEvengLogger
 
                                 // request new batch after we have received last
                                 if (!tokenSource.IsCancellationRequested)
-                                    RequestLogs(requestor, _lastFetchedId);
+                                    RequestLogs(requestor, _lastFetchedId + 1);
 
                                 errorCount = 0;
                             }
@@ -134,9 +131,12 @@ namespace QubicEvengLogger
                             if (ex.Message.Contains("Empty log"))
                             {
                                 // if we receive empty log it means there are no new log entries or the requested batch size is to big
-                                BatchSize /= 2;
-                                _lastDecrease = DateTime.UtcNow;
-                                Console.WriteLine($"Decreased Batchsize to {BatchSize}");
+                                if (BatchSize > 1)
+                                {
+                                    BatchSize /= 2;
+                                    _lastDecrease = DateTime.UtcNow;
+                                    Console.WriteLine($"Decreased Batchsize to {BatchSize}");
+                                }
                             }
                             else
                             {
@@ -156,7 +156,10 @@ namespace QubicEvengLogger
                     // main connection loop holder
                     while (!tokenSource.IsCancellationRequested)
                     {
-                        if(_lastDecrease.AddSeconds(5) < DateTime.UtcNow && _lastReceivedLogs.AddSeconds(5) > DateTime.UtcNow && DateTime.UtcNow.Second % 5 == 0){
+                        if (_lastDecrease.AddSeconds(5) < DateTime.UtcNow && 
+                            _lastReceivedLogs.AddSeconds(5) > DateTime.UtcNow && 
+                            DateTime.UtcNow.Second % 5 == 0)
+                        {
                             try
                             {
                                 var tickInfo = requestor.GetTickInfo().GetAwaiter().GetResult();
@@ -176,8 +179,8 @@ namespace QubicEvengLogger
                         // if we didn't receive anything in the last 5 seconds, we create a new request
                         if (_lastRequest.AddSeconds(5) < DateTime.UtcNow)
                         {
-                           
-                            RequestLogs(requestor, _lastFetchedId);
+
+                            RequestLogs(requestor, _lastFetchedId + 1);
                         }
                         Thread.Sleep(1000);
                     }

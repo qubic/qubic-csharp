@@ -1,5 +1,4 @@
-﻿using li.qubic.lib.Logging;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace QubicEvengLogger
 {
@@ -11,7 +10,7 @@ namespace QubicEvengLogger
     {
         static void Main(string[] args)
         {
-            var logConnector = new LogConnector("10.10.10.10", "1, 2, 3, 4");
+            var logConnector = new LogConnector(Demo.nodeIpAddress, Demo.passcode);
 
             ulong firstTick = 0;
             ulong lastTick = 0;
@@ -23,12 +22,12 @@ namespace QubicEvengLogger
             sw.Start();
 
             //process incoming log entries
-            logConnector.OnLogEntries += (entries) =>
+            logConnector.OnLogEntries += (eventEntries) =>
             {
-                firstTick = firstTick == 0 ? entries.Min(m => m.Tick) : firstTick;
-                lastTick = entries.Max(m => m.Tick);
-                totalReceived += entries.Count;
-                Console.WriteLine($"Rec: {entries.Count}/{totalReceived} from {entries.Min(m=> m.Id)} to {entries.Max(m => m.Id)} | Ticks: {lastTick-firstTick} | {firstTick} to {lastTick} | {sw.ElapsedMilliseconds}");
+                firstTick = firstTick == 0 ? eventEntries.Min(m => m.Tick) : firstTick;
+                lastTick = eventEntries.Max(m => m.Tick);
+                totalReceived += eventEntries.Count;
+                Console.WriteLine($"Rec: {eventEntries.Count}/{totalReceived} from {eventEntries.Min(m=> m.Id)} to {eventEntries.Max(m => m.Id)} | Ticks: {lastTick-firstTick} | {firstTick} to {lastTick} | {sw.ElapsedMilliseconds}");
             };
 
             var ts = new CancellationTokenSource();

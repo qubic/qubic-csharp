@@ -87,5 +87,66 @@ namespace li.qubic.test
             }
         }
 
+        [TestMethod]
+        public void TestGetLogEntriesPerTransaction()
+        {
+            var testNode = "45.152.160.16";
+            var passcode = new ulong[4]
+            {
+               190296, 110720, 101293, 9918201
+            };
+
+            using (var requestor = new QubicRequestor(testNode))
+            {
+
+                if (requestor.Connect())
+                {
+                    var currentTick = requestor.GetTickInfo().GetAwaiter().GetResult();
+                    Debug.WriteLine($"Tick: {currentTick.tick}");
+
+                    var finished = false;
+
+                    requestor.PackageReceived += (package) =>
+                    {
+                        if (package.Header.type == ResponseLogIdRangeFromTx.type)
+                        {
+                            var response = Marshalling.Deserialize<ResponseLogIdRangeFromTx>(package.Payload);
+                            Console.WriteLine($"From: {response.fromLogId}, lenght: {response.length}");
+                            finished = true;
+                        }
+                    };
+
+
+
+                    var header = new RequestResponseHeader(true)
+                    {
+                        size = Marshal.SizeOf(typeof(RequestResponseHeader)) + Marshal.SizeOf(typeof(RequestLogIdRangeFromTx)),
+                        type = RequestLogIdRangeFromTx.type
+                    };
+
+                    var rl = new RequestLogIdRangeFromTx()
+                    {
+                        passcode = passcode,
+                        tick = 16053757,
+                        txId = 1
+                    };
+
+                    var data = Marshalling.Serialize(header).Concat(Marshalling.Serialize(rl)).ToArray();
+                    requestor.Send(data);
+
+
+                    var start = DateTime.UtcNow;
+                    while (start.AddSeconds(120) > DateTime.UtcNow && !finished)
+                    {
+                        Thread.Sleep(1000);
+                    }
+                }
+                else
+                {
+                    Assert.Fail("Connection failed");
+                }
+            }
+        }
+
     }
 }
