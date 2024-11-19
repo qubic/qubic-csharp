@@ -148,7 +148,7 @@
     </Link>
     <PostBuildEvent>
       <Command>copy $(OutDir)$(TargetFileName) $(SolutionDir)li.qubic.lib\$(TargetFileName) /Y
-copy $(OutDir)$(TargetFileName) $(SolutionDir)li.qubic.test\$(TargetFileName) /Y</Command>
+copy $(OutDir)$(TargetFileName) $(SolutionDir)li.qubic.crypt\$(TargetFileName) /Y</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>

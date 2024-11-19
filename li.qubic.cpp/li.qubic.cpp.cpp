@@ -187,6 +187,10 @@ extern "C"
 
 
 
+	EXPORTED bool VerifyExported(const unsigned char* publicKey, const unsigned char* messageDigest, const unsigned char* signature) {
+		return verify(publicKey, messageDigest, signature);
+	}
+
 	EXPORTED void getIdentityExported(unsigned char* publicKey, unsigned char* identity, bool lowerCase) {
 		GetIdentity(publicKey, identity, lowerCase);
 	}

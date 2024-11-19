@@ -19,7 +19,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "li.qubic.lib.transfer", "li
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{F28D9F69-1E8F-4768-B7A9-E81B40BD5DBF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QubicEvengLogger", "QubicEvengLogger\QubicEvengLogger.csproj", "{DC49B998-B846-4ED9-8B2C-9C2E458C8EC7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "QubicEvengLogger", "QubicEvengLogger\QubicEvengLogger.csproj", "{DC49B998-B846-4ED9-8B2C-9C2E458C8EC7}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "li.qubic.crypt", "li.qubic.crypt\li.qubic.crypt.csproj", "{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -175,6 +177,26 @@ Global
 		{DC49B998-B846-4ED9-8B2C-9C2E458C8EC7}.Release|x64.Build.0 = Release|Any CPU
 		{DC49B998-B846-4ED9-8B2C-9C2E458C8EC7}.Release|x86.ActiveCfg = Release|Any CPU
 		{DC49B998-B846-4ED9-8B2C-9C2E458C8EC7}.Release|x86.Build.0 = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|ARM.ActiveCfg = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|ARM.Build.0 = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|ARM64.ActiveCfg = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|ARM64.Build.0 = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|x64.Build.0 = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|ARM.ActiveCfg = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|ARM.Build.0 = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|ARM64.ActiveCfg = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|ARM64.Build.0 = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|x64.ActiveCfg = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|x64.Build.0 = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA2F1DD2-1FE8-40E1-9ABB-464BEFE53B0D}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

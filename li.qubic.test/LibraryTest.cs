@@ -1,3 +1,4 @@
+using li.qubic.crypt;
 using li.qubic.lib;
 
 namespace li.qubic.test
@@ -32,6 +33,19 @@ namespace li.qubic.test
             Assert.IsNotNull(identity);
 
             Assert.AreEqual("UGQLSPXWWQORKDDJNOQVYRPYPWKDYLBCTOJCQTPRJFUXGTQXJAVACKSDDNMA", identity);
+
+        }
+
+        [TestMethod]
+        public void TestIdToBinary()
+        {
+            var qcrypt = new QubicCrypt();
+            var seed = "prwutqifhtqxjrhpliuhzvezyobjwilejelewskiykvogmvlgolkqie";
+            var pubKey = qcrypt.GetPublicKey(seed);
+            var id = "UGQLSPXWWQORKDDJNOQVYRPYPWKDYLBCTOJCQTPRJFUXGTQXJAVACKSDDNMA";
+            var convertedPubKey = _helper.GetPublicKeyFromIdentity(id);
+
+            Assert.IsTrue(pubKey.SequenceEqual(convertedPubKey));
 
         }
     }

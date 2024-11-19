@@ -17,14 +17,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\li.qubic.crypt\li.qubic.crypt.csproj" />
     <ProjectReference Include="..\li.qubic.lib.transfer\li.qubic.lib.transfer.csproj" />
     <ProjectReference Include="..\li.qubic.lib\li.qubic.lib.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Update="libQubicHelper.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
 </Project>
