@@ -989,6 +989,32 @@ long long numberOfUnits;
     }
 
     [StructLayout(LayoutKind.Sequential, Pack = 0)]
+    public struct RespondedSystemInfo
+    {
+        public short version;
+        public ushort epoch;
+        public uint tick;
+        public uint initialTick;
+        public uint latestCreatedTick;
+
+        public ushort epochBeginningMillisecond;
+        public byte epochBeginningSecond;
+        public byte epochBeginningMinute;
+        public byte epochBeginningHour;
+        public byte epochBeginningDay;
+        public byte epochBeginningMonth;
+        public byte epochBeginningYear;
+
+        public uint numberOfEntities;
+        public uint numberOfTransactions;
+
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
+        public byte[] randomMiningSeed;
+
+        public int solutionThreshold;
+    }
+
+    [StructLayout(LayoutKind.Sequential, Pack = 0)]
     public struct TransferAssetOwnershipAndPossession_input
     {
         [MarshalAs(UnmanagedType.ByValArray, SizeConst = 32)]
@@ -1057,6 +1083,9 @@ long long numberOfUnits;
 
         REQUEST_CONTRACT_FUNCTION = 42,
         RESPOND_CONTRACT_FUNCTION = 43,
+
+        REQUEST_SYSTEM_INFO = 46,
+        RESPOND_SYSTEM_INFO = 47,
 
         PROCESS_SPECIAL_COMMAND = 255
     }

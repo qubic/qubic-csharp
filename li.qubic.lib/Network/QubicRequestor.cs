@@ -1,15 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Sockets;
+﻿using System.Net.Sockets;
 using System.Net;
-using System.Security.Cryptography;
-using System.Text;
-using System.Threading.Tasks;
 using System.Runtime.InteropServices;
-using System.Reflection.PortableExecutable;
 using System.Diagnostics;
 using li.qubic.lib.Helper;
+using System.Reflection.PortableExecutable;
 
 
 namespace li.qubic.lib.Network
@@ -21,40 +15,87 @@ namespace li.qubic.lib.Network
         public byte[] receiveBuffer = new byte[QubicLibConst.BUFFER_SIZE];
         public bool _finished = false;
         private string _ip;
+        private int _port = QubicLibConst.PORT;
         private int _receiveTimeout = 2; // seconds
         private Socket clientSocket;
         private short? _waitForPackageType = null;
 
         public Action<QubicRequestorReceivedPackage>? PackageReceived { get; set; }
-        public Action OnDisconnect { get; set; }
+        private Action<QubicRequestorReceivedPackage>? InternalPackageReceived { get; set; }
+        public Action? OnConnected { get; set; }
+        public Action<Exception?>? OnDisconnected { get; set; }
 
 
+        public QubicRequestor(string targetIp, int port = 21841, int receiveTimeout = 2)
+        {
+            _ip = targetIp;
+            if (port < 1024)
+            {
+                // assume port is meant as the timeout
+                // needed for backward compatibility
+                _receiveTimeout = port;
+            }
+            else
+            {
+                _port = port;
+                _receiveTimeout = receiveTimeout;
+            }
 
-        public QubicRequestor(string targetIp, int receiveTimeout = 2)
+        }
+
+        private void ProcessPackageReceived(QubicRequestorReceivedPackage p)
+        {
+            if (PackageReceived != null)
+            {
+                PackageReceived.Invoke(p);
+            }
+            if (InternalPackageReceived != null)
+            {
+                InternalPackageReceived.Invoke(p);
+            }
+        }
+ 
+        [Obsolete("DO NOT ANYMORE USE THIS!")]
+        public QubicRequestor(short protocol, string targetIp, int receiveTimeout = 2)
         {
             _ip = targetIp;
             _receiveTimeout = receiveTimeout;
         }
+
+        private object _socketConnectLock = new object();
 
         public bool Connect()
         {
             if (clientSocket?.Connected ?? false)
                 return true;
 
-            IPAddress ipAddress = IPAddress.Parse(_ip);
-            IPEndPoint remoteEP = new IPEndPoint(ipAddress, QubicLibConst.PORT);
+            lock (_socketConnectLock)
+            {
 
-            clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                // if we were waiting for the lock it make sense to check hier for connection again
+                if (clientSocket?.Connected ?? false)
+                    return true;
 
-            Debug.WriteLine($"[QUBICREQUESTOR-{InstanceId}]Connect to {_ip}");
+                IPAddress ipAddress = IPAddress.Parse(_ip);
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, _port);
 
-            // Connect to the remote endpoint
-            clientSocket.Connect(remoteEP);
+                clientSocket?.Dispose();
 
-            // listen to what the peer sends
-            clientSocket.BeginReceive(receiveBuffer, 0, QubicLibConst.BUFFER_SIZE, 0,
-                new AsyncCallback(ReceiveCallback), clientSocket);
+                clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
 
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")}Connect to {_ip}");
+
+                // Connect to the remote endpoint
+                clientSocket.Connect(remoteEP);
+
+                if (clientSocket.Connected && OnConnected != null)
+                    OnConnected.Invoke();
+
+                // listen to what the peer sends
+                clientSocket.BeginReceive(receiveBuffer, 0, QubicLibConst.BUFFER_SIZE, 0,
+                    new AsyncCallback(ReceiveCallback), clientSocket);
+
+            }
             return clientSocket.Connected;
         }
 
@@ -63,17 +104,36 @@ namespace li.qubic.lib.Network
             this.Close();
         }
 
-        public void Close()
+        public void Close(bool emitEvent = true)
         {
-            // Close the socket
-            clientSocket.Shutdown(SocketShutdown.Both);
-            clientSocket.Close();
+            Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} Disconnect from {_ip}");
+
+            try
+            {
+                lock (_socketConnectLock)
+                {
+                    // Close the socket
+                    clientSocket.Shutdown(SocketShutdown.Both);
+                    clientSocket.Close();
+                }
+            }
+            catch (Exception)
+            {
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} Error disconnecting from {_ip}");
+            }
+            if (emitEvent && OnDisconnected != null)
+                OnDisconnected.Invoke(null);
         }
+
+        private object _socketSendLock = new object();
 
         public void Send(byte[] data)
         {
-            // Send the binary package to the remote endpoint
-            clientSocket.Send(data);
+            lock (_socketSendLock)
+            {
+                // Send the binary package to the remote endpoint
+                clientSocket.Send(data);
+            }
         }
 
         public bool? IsConnected => clientSocket?.Connected;
@@ -88,7 +148,7 @@ namespace li.qubic.lib.Network
         public void GetDataPackageFromPeer<T>(byte[] requestPackage, short waitForPackageType, Action<T> resultFunc)
             where T : struct
         {
-            Action<QubicRequestorReceivedPackage> receiverAction = (p) =>
+            this.InternalPackageReceived = (p) =>
             {
                 if (p.Header.type == (short)waitForPackageType)
                 {
@@ -96,27 +156,10 @@ namespace li.qubic.lib.Network
                     resultFunc.Invoke(result);
                 }
             };
-
-            this.PackageReceived += receiverAction;
             this.AskPeer(requestPackage, waitForPackageType);
-            this.PackageReceived -= receiverAction;
+            this.InternalPackageReceived = null;
         }
 
-
-        public Task<T> GetDataPackageFromPeerAsyc<T>(byte[] requestPackage, short waitForPackageType)
-            where T : struct
-        {
-            return Task.Run(() =>
-            {
-                var t = new TaskCompletionSource<T>();
-
-                GetDataPackageFromPeer<T>(requestPackage, waitForPackageType, s => t.TrySetResult(s));
-
-                return t.Task;
-            });
-        }
-
-      
 
         /// <summary>
         /// must not send connect
@@ -137,8 +180,10 @@ namespace li.qubic.lib.Network
                     wasConnected = false;
                 }
 
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} Send, NumberOfBytes:" + requestPackage.Length);
+
                 // Send the binary package to the remote endpoint
-                clientSocket.Send(requestPackage);
+                Send(requestPackage);
 
                 var start = DateTime.UtcNow;
                 while (waitForPackageType != null && !_finished && start.AddSeconds(_receiveTimeout) > DateTime.UtcNow)
@@ -150,12 +195,12 @@ namespace li.qubic.lib.Network
                 if (!wasConnected)
                     Close();
 
-                return true;
+                return _finished;
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine("ERROR:" + ex.ToString());
+                Debug.WriteLine("ERROR:" + ex.ToString());
                 return false;
             }
         }
@@ -163,7 +208,7 @@ namespace li.qubic.lib.Network
 
         public void SendExchangePublicPeers(List<string> peers)
         {
-            if (peers.Count != 0)
+            if (peers.Count != 4)
                 throw new ArgumentException("Must be exact 4 peers to exchange");
 
 
@@ -175,8 +220,11 @@ namespace li.qubic.lib.Network
             packet.header.type = 0;
             packet.payload.peers = new byte[4, 4];
 
+            // need to randomize dejavu
+            packet.header.RandomizeDejavu();
+
             var i = 0;
-            foreach(string ip in peers)
+            foreach (string ip in peers)
             {
                 var peer = IPAddress.Parse(ip);
                 packet.payload.peers[i, 0] = peer.GetAddressBytes()[0];
@@ -219,12 +267,17 @@ namespace li.qubic.lib.Network
             socket.Send(data);
         }
 
+        /// <summary>
+        /// CAUTION this will overwrite PackageReceived callback
+        /// </summary>
+        /// <returns></returns>
+        /// <exception cref="TimeoutException"></exception>
         public async Task<CurrentTickInfo> GetTickInfo()
         {
             return await Task.Run(() =>
             {
                 CurrentTickInfo? info = null;
-                this.GetDataPackageFromPeer<CurrentTickInfo>(GetTickInfoRequestPackage(), (short)QubicPackageTypes.RESPOND_CURRENT_TICK_INFO, (r) =>
+                this.GetDataPackageFromPeer<CurrentTickInfo>(GetTickInfoRequestPackage().Item2, (short)QubicPackageTypes.RESPOND_CURRENT_TICK_INFO, (r) =>
                 {
                     info = r;
                 });
@@ -236,12 +289,50 @@ namespace li.qubic.lib.Network
             });
         }
 
-        private byte[] GetTickInfoRequestPackage()
+        /// <summary>
+        /// returns dejavu
+        /// </summary>
+        /// <returns></returns>
+        public int RequestTickInfo()
+        {
+            var (dejavu, data) = GetTickInfoRequestPackage();
+            this.Send(data);
+            return dejavu;
+        }
+
+        public async Task<RespondedSystemInfo> GetSystemInfo()
+        {
+            return await Task.Run(() =>
+            {
+                RespondedSystemInfo? info = null;
+                this.GetDataPackageFromPeer<RespondedSystemInfo>(GetSystemInfoRequestPackage(), (short)QubicPackageTypes.RESPOND_SYSTEM_INFO, (r) =>
+                {
+                    info = r;
+                });
+
+                if (info == null)
+                    throw new TimeoutException("SystemInfo was not received in time");
+
+                return info.Value;
+            });
+        }
+
+        private (int, byte[]) GetTickInfoRequestPackage()
         {
             var header = new RequestResponseHeader(true)
             {
                 size = 8,
                 type = (byte)QubicPackageTypes.REQUEST_CURRENT_TICK_INFO
+            };
+            return (header.dejavu, Marshalling.Serialize(header));
+        }
+
+        private byte[] GetSystemInfoRequestPackage()
+        {
+            var header = new RequestResponseHeader(true)
+            {
+                size = 8,
+                type = (byte)QubicPackageTypes.REQUEST_SYSTEM_INFO
             };
             return Marshalling.Serialize(header);
         }
@@ -261,13 +352,13 @@ namespace li.qubic.lib.Network
 
         private void ProcessReceivedData()
         {
-            
+
             var headerSize = Marshal.SizeOf<RequestResponseHeader>();
             RequestResponseHeader header;
             byte[] payloadData;
             lock (receiveQueueLock)
             {
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] ProcessReceivedData, NumberOfBytes:" + NumberOfReceivedBytes);
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} ProcessReceivedData, NumberOfBytes:" + NumberOfReceivedBytes);
 
                 if (NumberOfReceivedBytes < headerSize)
                     return;
@@ -284,30 +375,33 @@ namespace li.qubic.lib.Network
                 NumberOfReceivedBytes -= (uint)header.size;
             }
 
-            Debug.WriteLine($"[QubicRequestor-{InstanceId}] PACKAGE: {header.type} {header.size}; new NumberOfBytes: " + NumberOfReceivedBytes);
+            Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} PACKAGE: {header.type} {header.size}; new NumberOfBytes: " + NumberOfReceivedBytes);
             // Console.WriteLine($"RECEIVED: {header.type} {header.size}");
-            if (PackageReceived != null)
+
+            if (_waitForPackageType != null && header.type == _waitForPackageType)
             {
-                PackageReceived.Invoke(new QubicRequestorReceivedPackage(IPAddress.Parse(_ip), header, payloadData));
+                _finished = true;
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} FINISHED: {_waitForPackageType} vs. {header.type}");
+            }
+            else
+            {
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} WAIT FOR MORE DATA");
             }
 
-            if (_waitForPackageType != null && header.type == _waitForPackageType) { 
-                _finished = true;
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] FINISHED: {_waitForPackageType} vs. {header.type}");
-            }else
-            {
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] WAIT FOR MORE DATA");
-            }
+            
+            ProcessPackageReceived(new QubicRequestorReceivedPackage(IPAddress.Parse(_ip), header, payloadData));
+            
+
 
             if (NumberOfReceivedBytes > headerSize)
             {
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] More Bytes to Work on: {NumberOfReceivedBytes}");
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} More Bytes to Work on: {NumberOfReceivedBytes}");
                 // if number of received bytes is higher than header, we need to processs again
                 ProcessReceivedData();
             }
             else
             {
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] NO MORE Bytes to process");
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} NO MORE Bytes to process");
             }
         }
         private uint NumberOfReceivedBytes { get; set; }
@@ -327,7 +421,7 @@ namespace li.qubic.lib.Network
                 int bytesRead = 0;
                 bytesRead = socket.EndReceive(ar);
 
-                Debug.WriteLine($"[QubicRequestor-{InstanceId}] RECEIVED BYTES: {bytesRead}");
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} RECEIVED BYTES: {bytesRead}");
 
                 if (bytesRead > 0)
                 {
@@ -356,13 +450,25 @@ namespace li.qubic.lib.Network
             }
             catch (Exception e)
             {
-                Console.WriteLine($"[QUBICREQUESTOR-{InstanceId}] ERROR: {e.Message}");
+                Debug.WriteLine($"[QubicRequestor-{InstanceId}] {DateTime.UtcNow.ToString("HH:mm:ss")} ERROR: {e.Message}");
+                // on error disconnect/close
+                this.Close();
             }
         }
 
         public void Dispose()
         {
-            this.Close();
+            if (IsConnected ?? false)
+            {
+                try
+                {
+                    this.Disconnect();
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Error Disposing QubicRequestor", e);
+                }
+            }
         }
     }
 }
