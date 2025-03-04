@@ -1,6 +1,7 @@
 ﻿using li.qubic.lib;
 using li.qubic.lib.Helper;
 using li.qubic.lib.Network;
+using Microsoft.Extensions.Logging;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
@@ -29,17 +30,26 @@ namespace li.qubic.services.poolManager
         private string? _operatorSeed;
 
         private readonly Timer? _timer = null;
+        private ILogger _logger;
 
         public string IpAddress => _ip;
 
         public void LogDebug(string message)
         {
+            message = $"[{IpAddress}] " + message;
+
+            if (_logger != null)
+                _logger.LogDebug(message);
             if (OnLogMessage != null)
                 OnLogMessage.Invoke(message, null);
         }
 
         public void LogError(Exception e, string message)
         {
+            message = $"[{IpAddress}] " + message;
+
+            if (_logger != null)
+                _logger.LogError(e, message);
             if (OnLogMessage != null)
                 OnLogMessage.Invoke(message, e);
         }
@@ -51,12 +61,14 @@ namespace li.qubic.services.poolManager
         /// <param name="operatorSeed">for later use (not yet supported)</param>
         public PeerConnection(
             Peer peer,
-            string? operatorSeed = null
+            string? operatorSeed = null,
+            ILogger logger = null
             )
         {
             _operatorSeed = operatorSeed;
             _peer = peer;
             _ip = peer.Ip;
+            _logger = logger;
 
             _requestor = new QubicRequestor(_ip);
             _requestor.OnConnected += () =>
@@ -92,7 +104,7 @@ namespace li.qubic.services.poolManager
             _requestor.PackageReceived += PackageReceived;
 
             _timer = new Timer(DoWork, null, TimeSpan.Zero,
-                TimeSpan.FromSeconds(peer.UpdateInterval));
+                TimeSpan.FromMilliseconds(peer.UpdateInterval));
         }
 
         private bool _isRunning = false;

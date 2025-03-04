@@ -43,7 +43,7 @@ namespace li.qubic.lib.Network
 
        
         // settings
-        public int UpdateInterval { get; set; } = 1; // seconds to update node status
+        public int UpdateInterval { get; set; } = 1000; // ms to update node status
 
         private string _lastError;
         [JsonIgnore]
