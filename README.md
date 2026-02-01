@@ -1,4 +1,3 @@
 # qubic-csharp
-C# Library for Qubic
 
-WIP
+This repository is outdated. please use https://github.com/qubic/Qubic.Net
